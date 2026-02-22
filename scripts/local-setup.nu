@@ -307,7 +307,11 @@ def check_prerequisites [] {
     print ""
 }
 
-def cluster_exists []: bool {
-    let clusters = (kind get clusters 2>/dev/null | lines)
-    $CLUSTER_NAME in $clusters
+def cluster_exists [] {
+    let result = (do { kind get clusters } | complete)
+    if $result.exit_code == 0 {
+        $CLUSTER_NAME in ($result.stdout | str trim | lines)
+    } else {
+        false
+    }
 }
