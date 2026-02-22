@@ -2,18 +2,17 @@
 
 Platform documentation and Architecture Decision Records.
 
-## Structure
+## Overview
 
-```
-docs/
-├── adr/            # Architecture Decision Records
-│   ├── template.md
-│   └── 001-*.md
-└── guides/         # User and operator guides
-    ├── getting-started.md
-    ├── local-development.md
-    └── operations.md
-```
+- [Architecture Overview](architecture.md) — High-level platform architecture
+
+## Guides
+
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](guides/getting-started.md) | Initial setup and first deployment |
+| Local Development | Setting up local KinD environment (coming soon) |
+| Operations | Day-to-day platform operations (coming soon) |
 
 ## Architecture Decision Records (ADRs)
 
@@ -21,7 +20,8 @@ ADRs document significant architectural decisions:
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [Template](adr/template.md) | ADR Template | - |
+| [001](adr/001-bootstrap-framework-architecture.md) | Bootstrap Framework Architecture | Accepted |
+| [Template](adr/template.md) | ADR Template | — |
 
 ### Creating an ADR
 
@@ -30,13 +30,18 @@ ADRs document significant architectural decisions:
 3. Submit PR for review
 4. Update status after decision
 
-## Guides
+## Directory Structure
 
-| Guide | Description |
-|-------|-------------|
-| Getting Started | Initial setup and first deployment |
-| Local Development | Setting up local KinD environment |
-| Operations | Day-to-day platform operations |
+```
+docs/
+├── architecture.md     # Platform architecture overview
+├── adr/                # Architecture Decision Records
+│   ├── template.md
+│   └── 001-*.md
+└── guides/             # User and operator guides
+    ├── getting-started.md
+    └── ...
+```
 
 ## Contributing
 
