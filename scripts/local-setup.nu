@@ -175,7 +175,7 @@ def "main install" [
     }
     
     # 6. Install Monitoring (optional, can be slow)
-    if $components | str contains "monitoring" {
+    if ($components | str contains "monitoring") {
         install_monitoring
     }
     
@@ -307,7 +307,7 @@ def check_prerequisites [] {
     print ""
 }
 
-def cluster_exists [] -> bool {
+def cluster_exists []: bool {
     let clusters = (kind get clusters 2>/dev/null | lines)
     $CLUSTER_NAME in $clusters
 }
