@@ -108,3 +108,4 @@ temp/
 *.temp
 *.bak
 *.backup
+kubeconfig-local.yaml
