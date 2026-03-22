@@ -141,40 +141,45 @@ def "main status" [] {
 
 # Install platform components
 def "main install" [
-    --components: string = "all"  # Components to install (all, argocd, ingress, crossplane, vault, kyverno, monitoring)
+    --components: string = "all"  # Components to install (all, gateway, ingress, argocd, crossplane, vault, kyverno, monitoring)
 ] {
     print $"(ansi cyan_bold)Installing platform components...(ansi reset)"
     
     $env.KUBECONFIG = $KUBECONFIG_PATH
     
     let install_all = $components == "all"
-    
-    # 1. Install Ingress Controller (NGINX)
+
+    # 1. Install Gateway API CRDs (before ingress, no feature gate needed)
+    if $install_all or ($components | str contains "gateway") {
+        install_gateway_api
+    }
+
+    # 2. Install Ingress Controller (NGINX)
     if $install_all or ($components | str contains "ingress") {
         install_ingress
     }
     
-    # 2. Install ArgoCD
+    # 3. Install ArgoCD
     if $install_all or ($components | str contains "argocd") {
         install_argocd
     }
-    
-    # 3. Install Crossplane
+
+    # 4. Install Crossplane
     if $install_all or ($components | str contains "crossplane") {
         install_crossplane
     }
-    
-    # 4. Install Vault (dev mode)
+
+    # 5. Install Vault (dev mode)
     if $install_all or ($components | str contains "vault") {
         install_vault
     }
-    
-    # 5. Install Kyverno
+
+    # 6. Install Kyverno
     if $install_all or ($components | str contains "kyverno") {
         install_kyverno
     }
-    
-    # 6. Install Monitoring (optional, can be slow)
+
+    # 7. Install Monitoring (optional, can be slow)
     if ($components | str contains "monitoring") {
         install_monitoring
     }
@@ -186,6 +191,22 @@ def "main install" [
 # -----------------------------------------------------------------------------
 # Component Installation Functions
 # -----------------------------------------------------------------------------
+
+def install_gateway_api [] {
+    print "Installing Gateway API CRDs..."
+
+    # Standard channel includes GatewayClass, Gateway, HTTPRoute, ReferenceGrant
+    # See: https://github.com/kubernetes-sigs/gateway-api/releases
+    let gateway_api_version = "v1.2.1"
+    let manifest_url = $"https://github.com/kubernetes-sigs/gateway-api/releases/download/($gateway_api_version)/standard-install.yaml"
+
+    try {
+        kubectl apply -f $manifest_url
+        print $"(ansi green)✓ Gateway API CRDs ($gateway_api_version) installed(ansi reset)"
+    } catch {
+        print $"(ansi yellow)Warning: Could not install Gateway API CRDs, continuing...(ansi reset)"
+    }
+}
 
 def install_ingress [] {
     print "Installing NGINX Ingress Controller..."
@@ -213,7 +234,7 @@ def install_argocd [] {
     helm repo update
     
     # Install ArgoCD
-    helm upgrade --install argocd argo/argo-cd --namespace argocd --create-namespace --set 'server.service.type=NodePort' --set 'server.service.nodePortHttp=30080' --set 'server.service.nodePortHttps=30443' --set 'configs.params.server\.insecure=true' --wait --timeout 5m
+    helm upgrade --install argocd argo/argo-cd --namespace argocd --create-namespace --set 'server.service.type=NodePort' --set 'server.service.nodePortHttp=30080' --set 'server.service.nodePortHttps=30443' --set 'configs.params.server\.insecure=true' --wait --timeout 10m
     
     print $"(ansi green)✓ ArgoCD installed(ansi reset)"
 }
@@ -226,7 +247,7 @@ def install_crossplane [] {
     helm repo update
     
     # Install Crossplane
-    helm upgrade --install crossplane crossplane-stable/crossplane --namespace crossplane-system --create-namespace --wait --timeout 5m
+    helm upgrade --install crossplane crossplane-stable/crossplane --namespace crossplane-system --create-namespace --wait --timeout 15m
     
     print $"(ansi green)✓ Crossplane installed(ansi reset)"
 }
@@ -239,7 +260,7 @@ def install_vault [] {
     helm repo update
     
     # Install Vault in dev mode
-    helm upgrade --install vault hashicorp/vault --namespace vault --create-namespace --set 'server.dev.enabled=true' --set 'server.dev.devRootToken=root' --set 'ui.enabled=true' --wait --timeout 5m
+    helm upgrade --install vault hashicorp/vault --namespace vault --create-namespace --set 'server.dev.enabled=true' --set 'server.dev.devRootToken=root' --set 'ui.enabled=true' --wait --timeout 10m
     
     print $"(ansi green)✓ Vault installed (dev mode, root token: 'root')(ansi reset)"
 }
@@ -252,7 +273,7 @@ def install_kyverno [] {
     helm repo update
     
     # Install Kyverno
-    helm upgrade --install kyverno kyverno/kyverno --namespace kyverno --create-namespace --set 'replicaCount=1' --wait --timeout 5m
+    helm upgrade --install kyverno kyverno/kyverno --namespace kyverno --create-namespace --set 'replicaCount=1' --wait --timeout 15m
     
     print $"(ansi green)✓ Kyverno installed(ansi reset)"
 }
@@ -265,7 +286,7 @@ def install_monitoring [] {
     helm repo update
     
     # Install with minimal config for local dev
-    helm upgrade --install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --set 'grafana.service.type=NodePort' --set 'grafana.service.nodePort=30090' --set 'prometheus.prometheusSpec.retention=1d' --set 'alertmanager.enabled=false' --wait --timeout 10m
+    helm upgrade --install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --set 'grafana.service.type=NodePort' --set 'grafana.service.nodePort=30090' --set 'prometheus.prometheusSpec.retention=1d' --set 'alertmanager.enabled=false' --wait --timeout 15m
     
     print $"(ansi green)✓ Monitoring installed(ansi reset)"
 }
